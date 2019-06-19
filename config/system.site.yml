@@ -1,0 +1,14 @@
+uuid: 1d627e0f-186a-4946-9ba0-191c4de4c335
+name: jamie-auto
+mail: adams.jamie@bitsourceky.com
+slogan: ''
+page:
+  403: ''
+  404: ''
+  front: /node
+admin_compact_mode: false
+weight_select_max: 100
+langcode: en
+default_langcode: en
+_core:
+  default_config_hash: yXadRE77Va-G6dxhd2kPYapAvbnSvTF6hO4oXiOEynI
