@@ -13,81 +13,106 @@ class ProjectUnitTest extends \PHPUnit_Framework_TestCase
     /**
      * The mocked file object for testing.
      *
-     * @var PHP_CodeSniffer_File|PHPUnit_Framework_MockObject_MockObject
+     * @var \PHP_CodeSniffer\Files\File|PHPUnit_Framework_MockObject_MockObject
      */
     protected $phpcsFile;
 
+
     /**
      * {@inheritdoc}
+     *
+     * @return void
      */
     public function setUp()
     {
         parent::setUp();
-        $this->phpcsFile = $this->getMockBuilder('PHP_CodeSniffer_File')
+        $this->phpcsFile = $this->getMockBuilder('\PHP_CodeSniffer\Files\File')
             ->disableOriginalConstructor()
             ->getMock();
-    }
 
-    /**
-     * Tests the extending classes Sniff class.
-     */
-    public function testInfoFileDetection()
-    {
-				// @see https://www.drupal.org/project/coder/issues/2962880
-        $this->markTestIncomplete('This test relies on code that has been removed in PHP_CodeSniffer 3.x.');
+    }//end setUp()
 
-        $this->phpcsFile->expects($this->any())
-          ->method('getFilename')
-          // The file does not exist, but doesn't matter for this test.
-          ->will($this->returnValue(dirname(__FILE__) . '/modules/drupal6/test.php'));
-
-        $this->assertEquals(Project::getInfoFile($this->phpcsFile), dirname(__FILE__) . '/modules/drupal6/testmodule.info');
-
-    }
-
-    /**
-     * Tests the extending classes Sniff class.
-     */
-    public function testInfoFileNestedDetection()
-    {
-				// @see https://www.drupal.org/project/coder/issues/2962880
-        $this->markTestIncomplete('This test relies on code that has been removed in PHP_CodeSniffer 3.x.');
-
-        $this->phpcsFile->expects($this->any())
-          ->method('getFilename')
-          // The file does not exist, but doesn't matter for this test.
-          ->will($this->returnValue(dirname(__FILE__) . '/modules/drupal6/nested/test.php'));
-
-        $this->assertEquals(Project::getInfoFile($this->phpcsFile), dirname(__FILE__) . '/modules/drupal6/testmodule.info');
-    }
 
     /**
      * Tests the extending classes Sniff class.
      *
-     * @dataProvider coreVersionProvider
+     * @return void
      */
-    public function testCoreVersion($filename, $core_version)
+    public function testInfoFileDetection()
     {
-				// @see https://www.drupal.org/project/coder/issues/2962880
-        $this->markTestIncomplete('This test relies on code that has been removed in PHP_CodeSniffer 3.x.');
-
         $this->phpcsFile->expects($this->any())
-          ->method('getFilename')
-          // The file does not exist, but doesn't matter for this test.
-          ->will($this->returnValue($filename));
+            ->method('getFilename')
+            ->will($this->returnValue(dirname(__FILE__).'/modules/drupal6/test.php'));
 
-        $this->assertEquals(Project::getCoreVersion($this->phpcsFile), $core_version);
-    }
+        $this->assertEquals(Project::getInfoFile($this->phpcsFile), dirname(__FILE__).'/modules/drupal6/testmodule.info');
+
+    }//end testInfoFileDetection()
+
+
+    /**
+     * Tests the extending classes Sniff class.
+     *
+     * @return void
+     */
+    public function testInfoFileNestedDetection()
+    {
+        $this->phpcsFile->expects($this->any())
+            ->method('getFilename')
+            ->will($this->returnValue(dirname(__FILE__).'/modules/drupal6/nested/test.php'));
+
+        $this->assertEquals(Project::getInfoFile($this->phpcsFile), dirname(__FILE__).'/modules/drupal6/testmodule.info');
+
+    }//end testInfoFileNestedDetection()
+
+
+    /**
+     * Tests the extending classes Sniff class.
+     *
+     * @param string $filename    Name of the file that will be checked.
+     * @param string $coreVersion Expected core version for the file.
+     *
+     * @dataProvider coreVersionProvider
+     *
+     * @return void
+     */
+    public function testCoreVersion($filename, $coreVersion)
+    {
+        $this->phpcsFile->expects($this->any())
+            ->method('getFilename')
+            ->will($this->returnValue($filename));
+
+        $this->assertEquals(Project::getCoreVersion($this->phpcsFile), $coreVersion);
+
+    }//end testCoreVersion()
+
 
     /**
      * Data provider for testCoreVersion().
+     *
+     * @return array
      */
-    public function coreVersionProvider() {
-        return array(
-            array(dirname(__FILE__) . '/modules/drupal6/nested/test.php', '6.x'),
-            array(dirname(__FILE__) . '/modules/drupal7/test.php', '7.x'),
-            array(dirname(__FILE__) . '/modules/drupal8/test.php', '8.x'),
-        );
-    }
+    public function coreVersionProvider()
+    {
+        return [
+            [
+                dirname(__FILE__).'/modules/drupal6/nested/test.php',
+                6,
+            ],
+            [
+                dirname(__FILE__).'/modules/drupal7/test.php',
+                7,
+            ],
+            [
+                dirname(__FILE__).'/modules/drupal8/test.php',
+                8,
+            ],
+            [
+                'invalid',
+                8,
+            ],
+        ];
+
+    }//end coreVersionProvider()
+
 
 }//end class
