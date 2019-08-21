@@ -123,6 +123,8 @@ class ContainerBuilder extends Container implements TaggedContainerInterface
 
     private $removedIds = [];
 
+    private $removedBindingIds = [];
+
     private static $internalTypes = [
         'int' => true,
         'float' => true,
@@ -813,13 +815,11 @@ class ContainerBuilder extends Container implements TaggedContainerInterface
     }
 
     /**
-     * Gets all service ids.
-     *
-     * @return array An array of all defined service ids
+     * {@inheritdoc}
      */
     public function getServiceIds()
     {
-        return array_unique(array_merge(array_keys($this->getDefinitions()), array_keys($this->aliasDefinitions), parent::getServiceIds()));
+        return array_map('strval', array_unique(array_merge(array_keys($this->getDefinitions()), array_keys($this->aliasDefinitions), parent::getServiceIds())));
     }
 
     /**
@@ -865,6 +865,10 @@ class ContainerBuilder extends Container implements TaggedContainerInterface
     public function setAlias($alias, $id)
     {
         $alias = $this->normalizeId($alias);
+
+        if ('' === $alias || '\\' === substr($alias, -1) || \strlen($alias) !== strcspn($alias, "\0\r\n'")) {
+            throw new InvalidArgumentException(sprintf('Invalid alias id: "%s"', $alias));
+        }
 
         if (\is_string($id)) {
             $id = new Alias($this->normalizeId($id));
@@ -1018,6 +1022,10 @@ class ContainerBuilder extends Container implements TaggedContainerInterface
         }
 
         $id = $this->normalizeId($id);
+
+        if ('' === $id || '\\' === substr($id, -1) || \strlen($id) !== strcspn($id, "\0\r\n'")) {
+            throw new InvalidArgumentException(sprintf('Invalid service id: "%s"', $id));
+        }
 
         unset($this->aliasDefinitions[$id], $this->removedIds[$id]);
 
@@ -1502,6 +1510,35 @@ class ContainerBuilder extends Container implements TaggedContainerInterface
         }
 
         return isset($this->definitions[$id]) || isset($this->aliasDefinitions[$id]) || isset($this->removedIds[$id]) ? $id : parent::normalizeId($id);
+    }
+
+    /**
+     * Gets removed binding ids.
+     *
+     * @return array
+     *
+     * @internal
+     */
+    public function getRemovedBindingIds()
+    {
+        return $this->removedBindingIds;
+    }
+
+    /**
+     * Removes bindings for a service.
+     *
+     * @param string $id The service identifier
+     *
+     * @internal
+     */
+    public function removeBindings($id)
+    {
+        if ($this->hasDefinition($id)) {
+            foreach ($this->getDefinition($id)->getBindings() as $key => $binding) {
+                list(, $bindingId) = $binding->getValues();
+                $this->removedBindingIds[(int) $bindingId] = true;
+            }
+        }
     }
 
     /**
