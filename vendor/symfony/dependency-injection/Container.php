@@ -159,7 +159,7 @@ class Container implements ResettableContainerInterface
     /**
      * Sets a service.
      *
-     * Setting a service to null resets the service: has() returns false and get()
+     * Setting a synthetic service to null resets it: has() returns false and get()
      * behaves in the same way as if the service was never created.
      *
      * @param string $id      The service identifier
@@ -386,7 +386,7 @@ class Container implements ResettableContainerInterface
     /**
      * Gets all service ids.
      *
-     * @return array An array of all defined service ids
+     * @return string[] An array of all defined service ids
      */
     public function getServiceIds()
     {
@@ -405,7 +405,7 @@ class Container implements ResettableContainerInterface
         }
         $ids[] = 'service_container';
 
-        return array_unique(array_merge($ids, array_keys($this->methodMap), array_keys($this->fileMap), array_keys($this->services)));
+        return array_map('strval', array_unique(array_merge($ids, array_keys($this->methodMap), array_keys($this->fileMap), array_keys($this->services))));
     }
 
     /**
