@@ -12,6 +12,11 @@ namespace Drupal\Tests\file\Functional;
 class FileManagedFileElementTest extends FileFieldTestBase {
 
   /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
+
+  /**
    * Tests the managed_file element type.
    */
   public function testManagedFile() {
@@ -142,7 +147,7 @@ class FileManagedFileElementTest extends FileFieldTestBase {
     $this->drupalPostForm(NULL, $edit, t('Upload'));
 
     $fid = $this->getLastFileId();
-    $file = \Drupal::entityManager()->getStorage('file')->load($fid);
+    $file = \Drupal::entityTypeManager()->getStorage('file')->load($fid);
     $file->delete();
 
     $this->drupalPostForm(NULL, $edit, t('Upload'));
@@ -168,7 +173,7 @@ class FileManagedFileElementTest extends FileFieldTestBase {
     $file = $this->container->get('entity_type.manager')->getStorage('file')->load($fid);
     $file->setPermanent();
     $file->save();
-    $this->assertTrue(file_unmanaged_delete($file->getFileUri()));
+    $this->assertTrue(\Drupal::service('file_system')->delete($file->getFileUri()));
     $file->save();
     $this->assertTrue($file->isPermanent());
     $file->delete();
