@@ -52,6 +52,7 @@ class DOMTreeBuilderTest extends \Masterminds\HTML5\Tests\TestCase
         $html = '<!DOCTYPE html><html></html>';
         $doc = $this->parse($html);
 
+        $this->assertEquals('UTF-8', $doc->encoding);
         $this->assertInstanceOf('\DOMDocument', $doc);
         $this->assertEquals('html', $doc->documentElement->tagName);
         $this->assertEquals('http://www.w3.org/1999/xhtml', $doc->documentElement->namespaceURI);
@@ -130,6 +131,14 @@ class DOMTreeBuilderTest extends \Masterminds\HTML5\Tests\TestCase
                 a&amp; -- valid
             </body>
         </html>', $doc->saveXML());
+    }
+
+    public function testEntityAtEndOfFile()
+    {
+        $fragment = $this->parseFragment('&#');
+        $this->assertInstanceOf('DOMDocumentFragment', $fragment);
+        $this->assertSame('&#', $fragment->textContent);
+        $this->assertEquals('Line 1, Col 2: Expected &#DEC; &#HEX;, got EOF', $this->errors[0]);
     }
 
     public function testStrangeCapitalization()
