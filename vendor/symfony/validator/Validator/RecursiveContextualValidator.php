@@ -13,7 +13,9 @@ namespace Symfony\Component\Validator\Validator;
 
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\Composite;
+use Symfony\Component\Validator\Constraints\Existence;
 use Symfony\Component\Validator\Constraints\GroupSequence;
+use Symfony\Component\Validator\Constraints\Valid;
 use Symfony\Component\Validator\ConstraintValidatorFactoryInterface;
 use Symfony\Component\Validator\Context\ExecutionContext;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -26,6 +28,7 @@ use Symfony\Component\Validator\Mapping\CascadingStrategy;
 use Symfony\Component\Validator\Mapping\ClassMetadataInterface;
 use Symfony\Component\Validator\Mapping\Factory\MetadataFactoryInterface;
 use Symfony\Component\Validator\Mapping\GenericMetadata;
+use Symfony\Component\Validator\Mapping\GetterMetadata;
 use Symfony\Component\Validator\Mapping\MetadataInterface;
 use Symfony\Component\Validator\Mapping\PropertyMetadataInterface;
 use Symfony\Component\Validator\Mapping\TraversalStrategy;
@@ -352,24 +355,18 @@ class RecursiveContextualValidator implements ContextualValidatorInterface
      * Validates each object in a collection against the constraints defined
      * for their classes.
      *
-     * If the parameter $recursive is set to true, nested {@link \Traversable}
-     * objects are iterated as well. Nested arrays are always iterated,
-     * regardless of the value of $recursive.
+     * Nested arrays are also iterated.
      *
      * @param iterable                  $collection   The collection
      * @param string                    $propertyPath The current property path
      * @param (string|GroupSequence)[]  $groups       The validated groups
      * @param ExecutionContextInterface $context      The current execution context
-     *
-     * @see ClassNode
-     * @see CollectionNode
      */
     private function validateEachObjectIn($collection, $propertyPath, array $groups, ExecutionContextInterface $context)
     {
         foreach ($collection as $key => $value) {
             if (\is_array($value)) {
-                // Arrays are always cascaded, independent of the specified
-                // traversal strategy
+                // Also traverse nested arrays
                 $this->validateEachObjectIn(
                     $value,
                     $propertyPath.'['.$key.']',
@@ -540,7 +537,13 @@ class RecursiveContextualValidator implements ContextualValidatorInterface
                     throw new UnsupportedMetadataException(sprintf('The property metadata instances should implement "Symfony\Component\Validator\Mapping\PropertyMetadataInterface", got: "%s".', \is_object($propertyMetadata) ? \get_class($propertyMetadata) : \gettype($propertyMetadata)));
                 }
 
-                $propertyValue = $propertyMetadata->getPropertyValue($object);
+                if ($propertyMetadata instanceof GetterMetadata) {
+                    $propertyValue = new LazyProperty(static function () use ($propertyMetadata, $object) {
+                        return $propertyMetadata->getPropertyValue($object);
+                    });
+                } else {
+                    $propertyValue = $propertyMetadata->getPropertyValue($object);
+                }
 
                 $this->validateGenericNode(
                     $propertyValue,
@@ -599,7 +602,8 @@ class RecursiveContextualValidator implements ContextualValidatorInterface
      * in the passed metadata object. Then, if the value is an instance of
      * {@link \Traversable} and the selected traversal strategy permits it,
      * the value is traversed and each nested object validated against its own
-     * constraints. Arrays are always traversed.
+     * constraints. If the value is an array, it is traversed regardless of
+     * the given strategy.
      *
      * @param mixed                     $value             The validated value
      * @param object|null               $object            The current object
@@ -658,8 +662,8 @@ class RecursiveContextualValidator implements ContextualValidatorInterface
 
         $cascadingStrategy = $metadata->getCascadingStrategy();
 
-        // Quit unless we have an array or a cascaded object
-        if (!\is_array($value) && !($cascadingStrategy & CascadingStrategy::CASCADE)) {
+        // Quit unless we cascade
+        if (!($cascadingStrategy & CascadingStrategy::CASCADE)) {
             return;
         }
 
@@ -673,6 +677,10 @@ class RecursiveContextualValidator implements ContextualValidatorInterface
         // overridden by a group sequence
         // See validateClassNode()
         $cascadedGroups = null !== $cascadedGroups && \count($cascadedGroups) > 0 ? $cascadedGroups : $groups;
+
+        if ($value instanceof LazyProperty) {
+            $value = $value->getPropertyValue();
+        }
 
         if (\is_array($value)) {
             // Arrays are always traversed, independent of the specified
@@ -783,12 +791,17 @@ class RecursiveContextualValidator implements ContextualValidatorInterface
         $context->setGroup($group);
 
         foreach ($metadata->findConstraints($group) as $constraint) {
+            if ($constraint instanceof Existence) {
+                continue;
+            }
+
             // Prevent duplicate validation of constraints, in the case
             // that constraints belong to multiple validated groups
             if (null !== $cacheKey) {
                 $constraintHash = spl_object_hash($constraint);
-
-                if ($constraint instanceof Composite) {
+                // instanceof Valid: In case of using a Valid constraint with many groups
+                // it makes a reference object get validated by each group
+                if ($constraint instanceof Composite || $constraint instanceof Valid) {
                     $constraintHash .= $group;
                 }
 
@@ -803,6 +816,11 @@ class RecursiveContextualValidator implements ContextualValidatorInterface
 
             $validator = $this->validatorFactory->getInstance($constraint);
             $validator->initialize($context);
+
+            if ($value instanceof LazyProperty) {
+                $value = $value->getPropertyValue();
+            }
+
             $validator->validate($value, $constraint);
         }
     }
