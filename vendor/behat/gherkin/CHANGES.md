@@ -1,3 +1,21 @@
+4.7.0 / 2021-01-24
+==================
+
+ * Provides better messages for TableNode construct errors
+ * Now allows single character steps 
+ * Supports multiple Example Tables with tags
+
+4.6.2 / 2020-03-17
+==================
+
+ * Fixed issues due to incorrect cache key
+
+4.6.1 / 2020-02-27
+==================
+
+ * Fix AZ translations
+ * Correctly filter features, now that the base path is correctly set 
+
 4.6.0 / 2019-01-16
 ==================
 
