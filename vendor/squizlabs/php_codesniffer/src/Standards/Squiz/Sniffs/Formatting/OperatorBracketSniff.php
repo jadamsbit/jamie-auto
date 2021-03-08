@@ -9,8 +9,8 @@
 
 namespace PHP_CodeSniffer\Standards\Squiz\Sniffs\Formatting;
 
-use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Files\File;
+use PHP_CodeSniffer\Sniffs\Sniff;
 use PHP_CodeSniffer\Util\Tokens;
 
 class OperatorBracketSniff implements Sniff
@@ -107,6 +107,7 @@ class OperatorBracketSniff implements Sniff
                 T_OPEN_CURLY_BRACKET  => true,
                 T_OPEN_SHORT_ARRAY    => true,
                 T_CASE                => true,
+                T_EXIT                => true,
             ];
 
             if (isset($invalidTokens[$tokens[$previousToken]['code']]) === true) {
@@ -138,7 +139,9 @@ class OperatorBracketSniff implements Sniff
             T_NS_SEPARATOR,
             T_THIS,
             T_SELF,
+            T_STATIC,
             T_OBJECT_OPERATOR,
+            T_NULLSAFE_OBJECT_OPERATOR,
             T_DOUBLE_COLON,
             T_OPEN_SQUARE_BRACKET,
             T_CLOSE_SQUARE_BRACKET,
@@ -280,7 +283,9 @@ class OperatorBracketSniff implements Sniff
             T_NS_SEPARATOR             => true,
             T_THIS                     => true,
             T_SELF                     => true,
+            T_STATIC                   => true,
             T_OBJECT_OPERATOR          => true,
+            T_NULLSAFE_OBJECT_OPERATOR => true,
             T_DOUBLE_COLON             => true,
             T_MODULUS                  => true,
             T_ISSET                    => true,
