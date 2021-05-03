@@ -82,6 +82,10 @@ class ScopeIndentUnitTest extends AbstractSniffUnitTest
             ];
         }
 
+        if ($testFile === 'ScopeIndentUnitTest.4.inc') {
+            return [];
+        }
+
         return [
             7    => 1,
             10   => 1,
@@ -174,10 +178,19 @@ class ScopeIndentUnitTest extends AbstractSniffUnitTest
             1340 => 1,
             1342 => 1,
             1345 => 1,
-            1389 => 1,
-            1390 => 1,
-            1391 => 1,
-            1392 => 1,
+            1488 => 1,
+            1489 => 1,
+            1500 => 1,
+            1503 => 1,
+            1518 => 1,
+            1520 => 1,
+            1527 => 1,
+            1529 => 1,
+            1530 => 1,
+            1558 => 1,
+            1559 => 1,
+            1560 => 1,
+            1561 => 1,
         ];
 
     }//end getErrorList()
